@@ -1,0 +1,106 @@
+{% extends "service_ac/include/base_generic.html" %}
+
+{% block title %}
+Admin Dashboard
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Admin Dashboard</h2>
+    <p class="text-center fs-5">Selamat datang, {{ username }}!</p>
+
+    <div class="row">
+        <!-- Left Column: Menu and Total Revenue -->
+        <div class="col-md-4">
+            <!-- Menu -->
+            <div class="card mb-4 shadow">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Menu</h5>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item"><a href="{% url 'manage_users' %}"><i class="fas fa-users me-2"></i>Manage Users</a></li>
+                        <li class="list-group-item"><a href="{% url 'manage_teknisi' %}"><i class="fas fa-wrench me-2"></i>Manage Technicians</a></li>
+                        <li class="list-group-item"><a href="{% url 'manage_service' %}"><i class="fas fa-toolbox me-2"></i>Manage Services</a></li>
+                        <li class="list-group-item"><a href="{% url 'manage_harga' %}"><i class="fas fa-money-bill-wave me-2"></i>Manage Harga</a></li>
+                        <li class="list-group-item"><a href="{% url 'service_history' %}"><i class="fas fa-history me-2"></i>Services History</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Total Revenue -->
+            <div class="card mb-4 shadow">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Total Pendapatan</h5>
+                    <p class="fs-4">Rp {{ total_pendapatan|floatformat:0 }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Order Chart -->
+        <div class="col-md-8">
+            <div class="card mb-4 shadow">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Monthly Orders</h5>
+                    <canvas id="ordersChart" style="height: 300px;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    try {
+        // Data JSON langsung dari Django
+        const orderData = {{ order_data|safe }};
+        console.log("Order data retrieved:", orderData);
+
+        // Validasi apakah orderData ada
+        if (orderData && orderData.length > 0) {
+            // Siapkan data untuk grafik
+            const orderLabels = orderData.map(order =>
+                new Date(2020, order.month - 1).toLocaleString('default', { month: 'long' })
+            );
+            const orderCounts = orderData.map(order => order.order_count);
+
+            console.log("Order Labels:", orderLabels);
+            console.log("Order Counts:", orderCounts);
+
+            // Render grafik dengan Chart.js
+            const ctxOrders = document.getElementById('ordersChart').getContext('2d');
+            new Chart(ctxOrders, {
+                type: 'bar',
+                data: {
+                    labels: orderLabels,
+                    datasets: [{
+                        label: 'Total Orders',
+                        data: orderCounts,
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            console.log("Chart rendered successfully.");
+        } else {
+            console.warn("No order data available to display chart.");
+        }
+    } catch (error) {
+        console.error("Error while rendering chart:", error);
+    }
+});
+</script>
+{% endblock %}

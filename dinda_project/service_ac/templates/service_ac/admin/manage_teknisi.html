@@ -1,0 +1,186 @@
+{% extends "service_ac/include/base_generic.html" %}
+
+{% block title %}
+Manage Technicians
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-12">
+            <h2>Manage Technicians</h2>
+            <button id="addTechnicianBtn" class="btn btn-primary mb-3">Add Technician</button>
+            <table id="teknisiTable" class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>ID</th>
+                        <th>Nama</th>
+                        <th>Alamat</th>
+                        <th>Nomor HP</th>
+                        <th>Spesialisasi</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for teknisi in teknisi_list %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ teknisi.id }}</td>
+                        <td>{{ teknisi.nama }}</td>
+                        <td>{{ teknisi.alamat }}</td>
+                        <td>{{ teknisi.nomor_hp }}</td>
+                        <td>{{ teknisi.spesialisasi }}</td>
+                        <td>
+                            <button class="btn btn-warning editBtn" data-id="{{ teknisi.id }}">Edit</button>
+                            <button class="btn btn-danger deleteBtn" data-id="{{ teknisi.nama }}">Delete</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="teknisiModal" tabindex="-1" aria-labelledby="teknisiModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add/Edit Technician</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="teknisiForm">
+                        <input type="hidden" id="teknisiId">
+                        <div class="mb-3">
+                            <label for="nama" class="form-label">Nama</label>
+                            <input type="text" class="form-control" id="nama" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="password">
+                        </div>
+                        <div class="mb-3">
+                            <label for="alamat" class="form-label">Alamat</label>
+                            <input type="text" class="form-control" id="alamat" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="nomor_hp" class="form-label">Nomor HP</label>
+                            <input type="text" class="form-control" id="nomor_hp" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="spesialisasi" class="form-label">Spesialisasi</label>
+                            <input type="text" class="form-control" id="spesialisasi">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save changes</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    $('#teknisiTable').DataTable();
+
+    const teknisiModal = new bootstrap.Modal(document.getElementById('teknisiModal'));
+    const teknisiForm = document.getElementById('teknisiForm');
+
+    document.getElementById('addTechnicianBtn').addEventListener('click', () => {
+        teknisiForm.reset();
+        document.getElementById('teknisiId').value = '';
+        teknisiModal.show();
+    });
+
+    document.querySelectorAll('.editBtn').forEach(button => {
+        button.addEventListener('click', () => {
+            const row = button.closest('tr');
+            const id = button.dataset.id;
+            document.getElementById('teknisiId').value = id;
+            
+            
+            document.getElementById('nama').value = row.children[2].textContent;
+            document.getElementById('alamat').value = row.children[3].textContent;
+            document.getElementById('nomor_hp').value = row.children[4].textContent;
+            document.getElementById('spesialisasi').value = row.children[5].textContent;
+            
+            teknisiModal.show();
+        });
+    });
+
+
+    teknisiForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('teknisiId').value;
+        const nama = document.getElementById('nama').value;
+        const alamat = document.getElementById('alamat').value;
+        const nomor_hp = document.getElementById('nomor_hp').value;
+        const spesialisasi = document.getElementById('spesialisasi').value;
+        const password = document.getElementById('password').value;
+        const url = "{% url 'api_manage_teknisi' %}";
+
+        const method = 'POST';
+
+        const response = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id: id,
+                nama: nama,
+                alamat: alamat,
+                nomor_hp: nomor_hp,
+                spesialisasi: spesialisasi,
+                password: password
+            })
+        }).then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                location.reload();
+            } else {
+                alert(result.message);
+            }
+        });
+    });
+
+    document.querySelectorAll('.deleteBtn').forEach(button => {
+        button.addEventListener('click', async () => {
+            const result = await Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel'
+            });
+
+            if (result.isConfirmed) {
+                const nama = button.dataset.id;
+
+                const response = await fetch("{% url 'api_manage_teknisi' %}", {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ nama })
+                });
+
+                const result_final = await response.json();
+                if (result_final.success) {
+                    Swal.fire('Deleted!', 'Technician has been deleted.', 'success');
+                    location.reload();
+                } else {
+                    Swal.fire('Error!', 'There was a problem deleting the technician.', 'error');
+                }
+            }
+        });
+    });
+});
+
+</script>
+{% endblock %}

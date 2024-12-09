@@ -1,0 +1,89 @@
+{% extends "service_ac/include/base_generic.html" %}
+
+{% block title %}
+User Dashboard
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="text-center">User Dashboard</h2>
+            <p class="text-center">Welcome, {{ request.session.username|default:"User" }}!</p>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Services</h5>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item"><a href="{% url 'order_service' %}">Order Service</a></li>
+                        <li class="list-group-item"><a href="{% url 'view_orders' %}">View Your Orders</a></li>
+                        <li class="list-group-item"><a href="{% url 'profile' %}">Profile</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Order Statistics</h5>
+                    {% if order_data %}
+                        <canvas id="ordersChart"></canvas>
+                    {% else %}
+                        <p>No orders available for statistics.</p>
+                    {% endif %}
+                </div>
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- JSON data for JavaScript -->
+{{ order_data|json_script:"order_data" }}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Retrieve data from JSON script tag
+    const orderData = JSON.parse(document.getElementById('order_data').textContent);
+
+    if (orderData.length > 0) {
+        const labels = orderData.map(order => {
+            const date = new Date(2020, order.month - 1);
+            return date.toLocaleString('default', { month: 'long' });
+        });
+
+        const data = orderData.map(order => order.order_count);
+
+        const ctx = document.getElementById('ordersChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: '# of Orders',
+                    data: data,
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    } else {
+        console.log("No order data available to display chart.");
+    }
+});
+</script>
+{% endblock %}

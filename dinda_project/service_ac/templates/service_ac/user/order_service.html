@@ -1,0 +1,43 @@
+{% extends "service_ac/include/base_generic.html" %}
+
+{% block title %}
+Order Service
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Order Service</h2>
+
+    <!-- Alert Box -->
+    {% if success %}
+    <div class="alert alert-success" role="alert">
+        {{ success }}
+    </div>
+    {% elif error %}
+    <div class="alert alert-danger" role="alert">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="tanggal_servis">Tanggal Service:</label>
+            <input type="datetime-local" class="form-control" id="tanggal_servis" name="tanggal_servis" required>
+        </div>
+        <div class="form-group">
+            <label for="deskripsi">Deskripsi:</label>
+            <input type="text" class="form-control" id="deskripsi" name="deskripsi" required>
+        </div>
+        <div class="form-group">
+            <label for="location">Location:</label>
+            <input type="text" class="form-control" id="location" name="location" required>
+        </div>
+        <div class="form-group">
+            <label for="harga">Harga:</label>
+            <input type="text" class="form-control" id="harga" name="harga" value="{{ harga }}" readonly>
+        </div>
+        <button type="submit" class="btn btn-primary">Order Service</button>
+    </form>
+</div>
+{% endblock %}
